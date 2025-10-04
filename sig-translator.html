@@ -12,10 +12,12 @@
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             padding: 20px;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
         }
 
         .container {
@@ -941,7 +943,7 @@
 
         // Sig code translation dictionary
         const sigCodes = {
-            'qd': 'once daily', 'od': 'in right eye', 'bid': 'twice daily', 'tid': 'three times daily',
+            'qd': 'once daily', 'od': 'once daily', 'bid': 'twice daily', 'tid': 'three times daily',
             'qid': 'four times daily', 'q4h': 'every 4 hours', 'q6h': 'every 6 hours', 
             'q8h': 'every 8 hours', 'q12h': 'every 12 hours', 'q4-6h': 'every 4 to 6 hours',
             'q6-8h': 'every 6 to 8 hours', 'qhs': 'at bedtime', 'qam': 'every morning', 
