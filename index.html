@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pharmacy Training Tools</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .container {
+            max-width: 600px;
+            width: 100%;
+        }
+        h1 {
+            color: white;
+            text-align: center;
+            margin-bottom: 40px;
+            font-size: 2.5em;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            transition: transform 0.3s, box-shadow 0.3s;
+            cursor: pointer;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.3);
+        }
+        .card-icon {
+            font-size: 3em;
+            text-align: center;
+            margin-bottom: 15px;
+        }
+        .card-title {
+            font-size: 1.8em;
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+        .card-description {
+            color: #7f8c8d;
+            text-align: center;
+            line-height: 1.6;
+        }
+        a {
+            text-decoration: none;
+            color: inherit;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>💊 Pharmacy Training Tools</h1>
+        
+        <a href="sig-translator.html">
+            <div class="card">
+                <div class="card-icon">📋</div>
+                <div class="card-title">Sig Code Translator</div>
+                <div class="card-description">
+                    Practice translating e-prescriptions, use flashcards, take quizzes, and track your progress
+                </div>
+            </div>
+        </a>
+
+        <a href="primerx-simulator.html">
+            <div class="card">
+                <div class="card-icon">⚙️</div>
+                <div class="card-title">PrimeRX Simulator</div>
+                <div class="card-description">
+                    Hands-on training with realistic prescription processing workflow simulation
+                </div>
+            </div>
+        </a>
+    </div>
+</body>
+</html>
