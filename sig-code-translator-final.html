@@ -1,0 +1,1459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sig Code Translator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .tab-navigation {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            background: white;
+            padding: 10px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .tab-btn {
+            padding: 12px 24px;
+            border: none;
+            background: #f0f0f0;
+            color: #333;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .tab-btn:hover {
+            background: #e0e0e0;
+        }
+
+        .tab-btn.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .grid-layout {
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            gap: 20px;
+        }
+
+        .main-section {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .sidebar {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            max-height: calc(100vh - 100px);
+            overflow-y: auto;
+            position: sticky;
+            top: 80px;
+        }
+
+        h1 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 2em;
+        }
+
+        h2 {
+            color: #764ba2;
+            margin-bottom: 15px;
+            font-size: 1.5em;
+        }
+
+        h3 {
+            color: #667eea;
+            margin-top: 20px;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 5px;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+        }
+
+        .input-section {
+            margin-bottom: 30px;
+        }
+
+        label {
+            display: block;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        textarea {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            font-family: 'Courier New', monospace;
+            resize: vertical;
+            min-height: 100px;
+            transition: border-color 0.3s;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .label-output {
+            background: #f8f9fa;
+            border: 3px solid #333;
+            border-radius: 10px;
+            padding: 25px;
+            margin-top: 20px;
+        }
+
+        .label-header {
+            text-align: center;
+            border-bottom: 2px solid #333;
+            padding-bottom: 15px;
+            margin-bottom: 15px;
+        }
+
+        .pharmacy-name {
+            font-size: 1.3em;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .label-field {
+            margin: 12px 0;
+            display: flex;
+        }
+
+        .field-label {
+            font-weight: bold;
+            min-width: 120px;
+            color: #333;
+        }
+
+        .field-value {
+            color: #000;
+            flex: 1;
+        }
+
+        .directions-box {
+            background: white;
+            border: 2px solid #667eea;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 15px;
+            min-height: 60px;
+        }
+
+        .directions-label {
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 8px;
+        }
+
+        .directions-text {
+            font-size: 1.1em;
+            line-height: 1.6;
+            color: #000;
+        }
+
+        .code-item {
+            margin: 8px 0;
+            padding: 8px;
+            background: #f8f9fa;
+            border-radius: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .code-abbr {
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            color: #667eea;
+            min-width: 80px;
+        }
+
+        .code-meaning {
+            color: #333;
+            flex: 1;
+        }
+
+        .search-box {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+
+        .search-box:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        /* Flashcard Styles */
+        .flashcard-container {
+            perspective: 1000px;
+            margin: 30px auto;
+            max-width: 500px;
+        }
+
+        .flashcard {
+            width: 100%;
+            height: 300px;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.6s;
+            cursor: pointer;
+        }
+
+        .flashcard.flipped {
+            transform: rotateY(180deg);
+        }
+
+        .flashcard-front, .flashcard-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 15px;
+            padding: 30px;
+            font-size: 2em;
+            font-weight: bold;
+            text-align: center;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+        }
+
+        .flashcard-front {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .flashcard-back {
+            background: white;
+            color: #333;
+            transform: rotateY(180deg);
+            border: 3px solid #667eea;
+        }
+
+        .flashcard-controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        .btn-secondary:hover {
+            background: #e0e0e0;
+        }
+
+        /* Quiz Styles */
+        .quiz-container {
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        .quiz-question {
+            background: #f8f9fa;
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            border: 3px solid #667eea;
+        }
+
+        .question-text {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .sig-code-display {
+            font-family: 'Courier New', monospace;
+            font-size: 2em;
+            color: #667eea;
+            text-align: center;
+            padding: 20px;
+            background: white;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .quiz-input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            margin-bottom: 15px;
+        }
+
+        .quiz-input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .quiz-feedback {
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        .quiz-feedback.correct {
+            background: #d4edda;
+            color: #155724;
+            border: 2px solid #28a745;
+        }
+
+        .quiz-feedback.incorrect {
+            background: #f8d7da;
+            color: #721c24;
+            border: 2px solid #dc3545;
+        }
+
+        .quiz-stats {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2em;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .stat-label {
+            color: #666;
+            margin-top: 5px;
+        }
+
+        /* Practice History Styles */
+        .history-container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .history-item {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .history-code {
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            color: #667eea;
+            font-size: 1.2em;
+        }
+
+        .history-translation {
+            color: #333;
+            flex: 1;
+            margin: 0 20px;
+        }
+
+        .history-score {
+            text-align: center;
+            min-width: 100px;
+        }
+
+        .score-circle {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.2em;
+            margin: 0 auto 5px;
+        }
+
+        .score-circle.good {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .score-circle.okay {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .score-circle.poor {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .history-empty {
+            text-align: center;
+            padding: 60px 20px;
+            color: #666;
+        }
+
+        .history-empty-icon {
+            font-size: 4em;
+            margin-bottom: 20px;
+        }
+
+        .clear-history-btn {
+            margin-top: 20px;
+            background: #dc3545;
+            color: white;
+        }
+
+        .clear-history-btn:hover {
+            background: #c82333;
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #667eea;
+            border-radius: 10px;
+        }
+
+        @media (max-width: 1024px) {
+            .grid-layout {
+                grid-template-columns: 1fr;
+            }
+            
+            .sidebar {
+                position: relative;
+                top: 0;
+                max-height: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Tab Navigation -->
+        <div class="tab-navigation">
+            <button class="tab-btn active" onclick="switchTab('translator')">📋 Translator</button>
+            <button class="tab-btn" onclick="switchTab('flashcards')">🎴 Flashcards</button>
+            <button class="tab-btn" onclick="switchTab('quiz')">🎯 Quiz Mode</button>
+            <button class="tab-btn" onclick="switchTab('history')">📊 Practice History</button>
+        </div>
+
+        <!-- Translator Tab -->
+        <div id="translator" class="tab-content active">
+            <div class="grid-layout">
+                <div class="main-section">
+                    <h1>📋 Sig Code Translator</h1>
+                    <p class="subtitle">Practice translating incoming e-prescriptions</p>
+
+                    <div style="margin-bottom: 20px;">
+                        <button class="btn btn-primary" onclick="generateRandomPrescription()" style="width: 100%;">
+                            🎲 Generate New E-Prescription
+                        </button>
+                    </div>
+
+                    <!-- Incoming E-Prescription Display -->
+                    <div id="incomingRx" style="background: #e3f2fd; border: 3px solid #1976d2; border-radius: 10px; padding: 25px; margin-bottom: 30px;">
+                        <div style="background: #1976d2; color: white; padding: 10px 15px; margin: -25px -25px 20px -25px; border-radius: 7px 7px 0 0; display: flex; justify-content: space-between; align-items: center;">
+                            <span style="font-weight: bold; font-size: 1.1em;">📥 Incoming E-Prescription</span>
+                            <span style="background: #fff; color: #1976d2; padding: 3px 10px; border-radius: 12px; font-size: 0.9em; font-weight: bold;">NEW</span>
+                        </div>
+                        
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px;">
+                            <div>
+                                <div style="font-weight: bold; color: #1976d2; margin-bottom: 5px;">Patient:</div>
+                                <div id="rxPatient" style="font-size: 1.1em;">Smith, John</div>
+                                <div style="color: #666; font-size: 0.9em;">DOB: <span id="rxDOB">05/15/1985</span></div>
+                            </div>
+                            <div>
+                                <div style="font-weight: bold; color: #1976d2; margin-bottom: 5px;">Prescriber:</div>
+                                <div id="rxPrescriber" style="font-size: 1.1em;">Dr. Johnson, MD</div>
+                                <div style="color: #666; font-size: 0.9em;">NPI: <span id="rxNPI">1234567890</span></div>
+                            </div>
+                        </div>
+
+                        <div style="background: white; padding: 20px; border-radius: 8px; border-left: 4px solid #1976d2;">
+                            <div style="font-weight: bold; color: #1976d2; margin-bottom: 10px; font-size: 1.1em;">Medication:</div>
+                            <div id="rxMedication" style="font-size: 1.3em; font-weight: bold; margin-bottom: 15px;">Lisinopril 10mg Tablet</div>
+                            
+                            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 15px;">
+                                <div>
+                                    <div style="font-weight: bold; color: #666; font-size: 0.9em;">Quantity:</div>
+                                    <div id="rxQuantity" style="font-size: 1.1em;">#30</div>
+                                </div>
+                                <div>
+                                    <div style="font-weight: bold; color: #666; font-size: 0.9em;">Refills:</div>
+                                    <div id="rxRefills" style="font-size: 1.1em;">5</div>
+                                </div>
+                                <div>
+                                    <div style="font-weight: bold; color: #666; font-size: 0.9em;">Days Supply:</div>
+                                    <div id="rxDays" style="font-size: 1.1em;">30</div>
+                                </div>
+                            </div>
+
+                            <div style="background: #fff3cd; padding: 15px; border-radius: 8px; border-left: 4px solid #ff9800;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                    <div style="font-weight: bold; color: #f57c00;">📝 DIRECTIONS:</div>
+                                    <button onclick="toggleSigView()" style="padding: 5px 12px; background: #f57c00; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 0.85em; font-weight: bold;">
+                                        <span id="toggleBtn">Show Sig Code</span>
+                                    </button>
+                                </div>
+                                <div id="rxDirections" style="font-size: 1.2em; color: #333; line-height: 1.5;">Take 1 tablet by mouth twice daily</div>
+                                <div id="rxSigCode" style="font-family: 'Courier New', monospace; font-size: 1.4em; font-weight: bold; color: #333; display: none;">1 tab po bid</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="input-section">
+                        <label for="sigInput">Your Sig Code Translation:</label>
+                        <textarea id="sigInput" placeholder="Type the sig code abbreviation here (e.g., 1 tab po bid)"></textarea>
+                        <button class="btn btn-success" onclick="checkTranslation()" style="width: 100%; margin-top: 10px;">✓ Check My Sig Code</button>
+                    </div>
+
+                    <div id="translationFeedback" style="display: none; margin-top: 20px;"></div>
+
+                    <div class="label-output">
+                        <div class="label-header">
+                            <div class="pharmacy-name">YOUR PHARMACY</div>
+                            <div>123 Main Street | (555) 123-4567</div>
+                        </div>
+
+                        <div class="label-field">
+                            <span class="field-label">Patient:</span>
+                            <span class="field-value">Sample Patient</span>
+                        </div>
+                        <div class="label-field">
+                            <span class="field-label">Date:</span>
+                            <span class="field-value" id="currentDate"></span>
+                        </div>
+                        <div class="label-field">
+                            <span class="field-label">Rx Number:</span>
+                            <span class="field-value">1234567</span>
+                        </div>
+                        <div class="label-field">
+                            <span class="field-label">Prescriber:</span>
+                            <span class="field-value">Dr. Sample, MD</span>
+                        </div>
+                        <div class="label-field">
+                            <span class="field-label">Drug:</span>
+                            <span class="field-value">Medication Name</span>
+                        </div>
+
+                        <div class="directions-box">
+                            <div class="directions-label">DIRECTIONS:</div>
+                            <div class="directions-text" id="translatedText">Take 1 tablet by mouth twice daily as needed for pain</div>
+                        </div>
+
+                        <div class="label-field" style="margin-top: 15px;">
+                            <span class="field-label">Refills:</span>
+                            <span class="field-value">0</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="sidebar">
+                    <h2>📚 Sig Code Cheat Sheet</h2>
+                    <input type="text" class="search-box" id="searchBox" placeholder="Search codes...">
+                    
+                    <div id="cheatSheet">
+                        <h3>Frequency</h3>
+                        <div class="code-item">
+                            <span class="code-abbr">qd</span>
+                            <span class="code-meaning">once daily</span>
+                        </div>
+                        <div class="code-item">
+                            <span class="code-abbr">bid</span>
+                            <span class="code-meaning">twice daily</span>
+                        </div>
+                        <div class="code-item">
+                            <span class="code-abbr">tid</span>
+                            <span class="code-meaning">three times daily</span>
+                        </div>
+                        <div class="code-item">
+                            <span class="code-abbr">qid</span>
+                            <span class="code-meaning">four times daily</span>
+                        </div>
+                        <div class="code-item">
+                            <span class="code-abbr">q4h</span>
+                            <span class="code-meaning">every 4 hours</span>
+                        </div>
+                        <div class="code-item">
+                            <span class="code-abbr">q6h</span>
+                            <span class="code-meaning">every 6 hours</span>
+                        </div>
+                        <div class="code-item">
+                            <span class="code-abbr">q8h</span>
+                            <span class="code-meaning">every 8 hours</span>
+                        </div>
+                        <div class="code-item">
+                            <span class="code-abbr">q12h</span>
+                            <span class="code-meaning">every 12 hours</span>
+                        </div>
+                        <div class="code-item">
+                            <span class="code-abbr">qhs</span>
+                            <span class="code-meaning">at bedtime</span>
+                        </div>
+                        <div class="code-item">
+                            <span class="code-abbr">qam</span>
+                            <span class="code-meaning">every morning</span>
+                        </div>
+                        <div class="code-item">
+                            <span class="code-abbr">qpm</span>
+                            <span class="code-meaning">every evening</span>
+                        </div>
+
+                        <h3>Route of Administration</h3>
+                        <div class="code-item">
+                            <span class="code-abbr">po</span>
+                            <span class="code-meaning">by mouth</span>
+                        </div>
+                        <div class="code-item">
+                            <span class="code-abbr">sl</span>
+                            <span class="code-meaning">sublingual (under tongue)</span>
+                        </div>
+                        <div class="code-item">
+                            <span class="code-abbr">top</span>
+                            <span class="code-meaning">topically</span>
+                        </div>
+                        <div class="code-item">
+                            <span class="code-abbr">pr</span>
+                            <span class="code-meaning">rectally</span>
+                        </div>
+                        <div class="code-item">
+                            <span class="code-abbr">pv</span>
+                            <span class="code-meaning">vaginally</span>
+                        </div>
+                        <div class="code-item">
+                            <span class="code-abbr">ou</span>
+                            <span class="code-meaning">both eyes</span>
+                        </div>
+                        <div class="code-item">
+                            <span class="code-abbr">od</span>
+                            <span class="code-meaning">right eye</span>
+                        </div>
+                        <div class="code-item">
+                            <span class="code-abbr">os</span>
+                            <span class="code-meaning">left eye</span>
+                        </div>
+                        <div class="code-item">
+                            <span class="code-abbr">au</span>
+                            <span class="code-meaning">both ears</span>
+                        </div>
+                        <div class="code-item">
+                            <span class="code-abbr">ad</span>
+                            <span class="code-meaning">right ear</span>
+                        </div>
+                        <div class="code-item">
+                            <span class="code-abbr">as</span>
+                            <span class="code-meaning">left ear</span>
+                        </div>
+                        <div class="code-item">
+                            <span class="code-abbr">inh</span>
+                            <span class="code-meaning">inhale</span>
+                        </div>
+
+                        <h3>Timing</h3>
+                        <div class="code-item">
+                            <span class="code-abbr">ac</span>
+                            <span class="code-meaning">before meals</span>
+                        </div>
+                        <div class="code-item">
+                            <span class="code-abbr">pc</span>
+                            <span class="code-meaning">after meals</span>
+                        </div>
+                        <div class="code-item">
+                            <span class="code-abbr">am</span>
+                            <span class="code-meaning">morning</span>
+                        </div>
+                        <div class="code-item">
+                            <span class="code-abbr">pm</span>
+                            <span class="code-meaning">evening</span>
+                        </div>
+                        <div class="code-item">
+                            <span class="code-abbr">hs</span>
+                            <span class="code-meaning">at bedtime</span>
+                        </div>
+
+                        <h3>Form/Dosage</h3>
+                        <div class="code-item">
+                            <span class="code-abbr">tab</span>
+                            <span class="code-meaning">tablet</span>
+                        </div>
+                        <div class="code-item">
+                            <span class="code-abbr">cap</span>
+                            <span class="code-meaning">capsule</span>
+                        </div>
+                        <div class="code-item">
+                            <span class="code-abbr">supp</span>
+                            <span class="code-meaning">suppository</span>
+                        </div>
+                        <div class="code-item">
+                            <span class="code-abbr">gtt</span>
+                            <span class="code-meaning">drop(s)</span>
+                        </div>
+                        <div class="code-item">
+                            <span class="code-abbr">mL</span>
+                            <span class="code-meaning">milliliter</span>
+                        </div>
+                        <div class="code-item">
+                            <span class="code-abbr">tsp</span>
+                            <span class="code-meaning">teaspoon</span>
+                        </div>
+                        <div class="code-item">
+                            <span class="code-abbr">tbsp</span>
+                            <span class="code-meaning">tablespoon</span>
+                        </div>
+
+                        <h3>Special Instructions</h3>
+                        <div class="code-item">
+                            <span class="code-abbr">prn</span>
+                            <span class="code-meaning">as needed</span>
+                        </div>
+                        <div class="code-item">
+                            <span class="code-abbr">stat</span>
+                            <span class="code-meaning">immediately</span>
+                        </div>
+                        <div class="code-item">
+                            <span class="code-abbr">ud / ut dict</span>
+                            <span class="code-meaning">as directed</span>
+                        </div>
+                        <div class="code-item">
+                            <span class="code-abbr">c</span>
+                            <span class="code-meaning">with</span>
+                        </div>
+                        <div class="code-item">
+                            <span class="code-abbr">s</span>
+                            <span class="code-meaning">without</span>
+                        </div>
+                        <div class="code-item">
+                            <span class="code-abbr">aa</span>
+                            <span class="code-meaning">of each</span>
+                        </div>
+
+                        <h3>Numbers (Roman Numerals)</h3>
+                        <div class="code-item">
+                            <span class="code-abbr">i or ī</span>
+                            <span class="code-meaning">1</span>
+                        </div>
+                        <div class="code-item">
+                            <span class="code-abbr">ii or ij</span>
+                            <span class="code-meaning">2</span>
+                        </div>
+                        <div class="code-item">
+                            <span class="code-abbr">iii</span>
+                            <span class="code-meaning">3</span>
+                        </div>
+                        <div class="code-item">
+                            <span class="code-abbr">iv</span>
+                            <span class="code-meaning">4</span>
+                        </div>
+                        <div class="code-item">
+                            <span class="code-abbr">v</span>
+                            <span class="code-meaning">5</span>
+                        </div>
+                        <div class="code-item">
+                            <span class="code-abbr">ss</span>
+                            <span class="code-meaning">one-half</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Flashcards Tab -->
+        <div id="flashcards" class="tab-content">
+            <div class="main-section">
+                <h1>🎴 Flashcards</h1>
+                <p class="subtitle">Click the card to flip. Practice your sig code knowledge!</p>
+
+                <div class="flashcard-container">
+                    <div class="flashcard" id="flashcard" onclick="flipCard()">
+                        <div class="flashcard-front" id="cardFront">
+                            bid
+                        </div>
+                        <div class="flashcard-back" id="cardBack">
+                            twice daily
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flashcard-controls">
+                    <button class="btn btn-secondary" onclick="previousCard()">← Previous</button>
+                    <button class="btn btn-primary" onclick="markKnown()">✓ I Know This</button>
+                    <button class="btn btn-primary" onclick="nextCard()">Next →</button>
+                </div>
+
+                <div style="text-align: center; margin-top: 20px; color: #666;">
+                    Card <span id="cardCounter">1</span> of <span id="totalCards">0</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quiz Tab -->
+        <div id="quiz" class="tab-content">
+            <div class="main-section">
+                <h1>🎯 Quiz Mode</h1>
+                <p class="subtitle">Test your knowledge! Translate the sig code below.</p>
+
+                <div class="quiz-stats">
+                    <div class="stat-item">
+                        <div class="stat-value" id="quizCorrect">0</div>
+                        <div class="stat-label">Correct</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="quizTotal">0</div>
+                        <div class="stat-label">Total</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="quizAccuracy">0%</div>
+                        <div class="stat-label">Accuracy</div>
+                    </div>
+                </div>
+
+                <div class="quiz-container">
+                    <div class="quiz-question">
+                        <div class="question-text">Translate this sig code:</div>
+                        <div class="sig-code-display" id="quizSigCode">1 tab po bid</div>
+                        <input type="text" class="quiz-input" id="quizAnswer" placeholder="Type your answer here...">
+                        <button class="btn btn-primary" onclick="checkAnswer()" style="width: 100%;">Check Answer</button>
+                        <div id="quizFeedback"></div>
+                    </div>
+                    <button class="btn btn-secondary" onclick="nextQuestion()">Next Question →</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- History Tab -->
+        <div id="history" class="tab-content">
+            <div class="main-section">
+                <h1>📊 Practice History</h1>
+                <p class="subtitle">Track your progress and see which codes you've practiced</p>
+
+                <div class="history-container" id="historyContainer">
+                    <div class="history-empty">
+                        <div class="history-empty-icon">📝</div>
+                        <h2>No practice history yet</h2>
+                        <p>Complete some quizzes or flashcards to see your progress here!</p>
+                    </div>
+                </div>
+
+                <div style="text-align: center;">
+                    <button class="btn clear-history-btn" onclick="clearHistory()">Clear History</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Set current date
+        document.getElementById('currentDate').textContent = new Date().toLocaleDateString();
+
+        // Sig code translation dictionary
+        const sigCodes = {
+            'qd': 'once daily', 'od': 'in right eye', 'bid': 'twice daily', 'tid': 'three times daily',
+            'qid': 'four times daily', 'q4h': 'every 4 hours', 'q6h': 'every 6 hours', 
+            'q8h': 'every 8 hours', 'q12h': 'every 12 hours', 'q4-6h': 'every 4 to 6 hours',
+            'q6-8h': 'every 6 to 8 hours', 'qhs': 'at bedtime', 'qam': 'every morning', 
+            'qpm': 'every evening', 'po': 'by mouth', 'sl': 'under the tongue', 'top': 'topically',
+            'pr': 'rectally', 'pv': 'vaginally', 'ou': 'in both eyes', 'os': 'in left eye',
+            'ad': 'in right ear', 'as': 'in left ear', 'au': 'in both ears', 'inh': 'inhale',
+            'ac': 'before meals', 'pc': 'after meals', 'am': 'in the morning', 'pm': 'in the evening',
+            'hs': 'at bedtime', 'tab': 'tablet', 'tabs': 'tablets', 'cap': 'capsule', 'caps': 'capsules',
+            'supp': 'suppository', 'gtt': 'drop', 'gtts': 'drops', 'ml': 'milliliter',
+            'tsp': 'teaspoon', 'tbsp': 'tablespoon', 'prn': 'as needed', 'stat': 'immediately',
+            'ud': 'as directed', 'ut dict': 'as directed', 'c': 'with', 's': 'without',
+            'aa': 'of each', 'i': '1', 'ī': '1', 'ii': '2', 'ij': '2', 'iii': '3',
+            'iv': '4', 'v': '5', 'ss': 'one-half', 'pain': 'pain', 'fever': 'fever',
+            'nausea': 'nausea', 'cough': 'cough', 'infection': 'infection', 'itching': 'itching',
+            'anxiety': 'anxiety', 'insomnia': 'insomnia'
+        };
+
+        // Quiz questions pool
+        const quizQuestions = [
+            { code: '1 tab po bid', answer: 'take 1 tablet by mouth twice daily' },
+            { code: 'ii caps po tid', answer: 'take 2 capsules by mouth three times daily' },
+            { code: '1 tab po qhs prn insomnia', answer: 'take 1 tablet by mouth at bedtime as needed for insomnia' },
+            { code: '5ml po q6h', answer: 'take 5 milliliter by mouth every 6 hours' },
+            { code: '2 gtts ou bid', answer: 'instill 2 drops in both eyes twice daily' },
+            { code: '1 tab po qd ac', answer: 'take 1 tablet by mouth once daily before meals' },
+            { code: 'i cap po q8h', answer: 'take 1 capsule by mouth every 8 hours' },
+            { code: '1 supp pr qhs', answer: 'insert 1 suppository rectally at bedtime' },
+            { code: '1 tab sl prn pain', answer: 'take 1 tablet under the tongue as needed for pain' },
+            { code: 'ii tabs po qid', answer: 'take 2 tablets by mouth four times daily' },
+            { code: '10ml po tid pc', answer: 'take 10 milliliter by mouth three times daily after meals' },
+            { code: '1 tab po q12h', answer: 'take 1 tablet by mouth every 12 hours' },
+            { code: 'apply top bid', answer: 'apply topically twice daily' },
+            { code: '1 inh qam', answer: 'inhale 1 every morning' },
+            { code: 'ii gtts au qhs', answer: 'instill 2 drops in both ears at bedtime' }
+        ];
+
+        // Flashcard data
+        const flashcards = [
+            { front: 'bid', back: 'twice daily' },
+            { front: 'tid', back: 'three times daily' },
+            { front: 'qid', back: 'four times daily' },
+            { front: 'qd', back: 'once daily' },
+            { front: 'po', back: 'by mouth' },
+            { front: 'prn', back: 'as needed' },
+            { front: 'ac', back: 'before meals' },
+            { front: 'pc', back: 'after meals' },
+            { front: 'qhs', back: 'at bedtime' },
+            { front: 'q6h', back: 'every 6 hours' },
+            { front: 'q8h', back: 'every 8 hours' },
+            { front: 'sl', back: 'under the tongue' },
+            { front: 'top', back: 'topically' },
+            { front: 'ou', back: 'in both eyes' },
+            { front: 'au', back: 'in both ears' },
+            { front: 'ii', back: '2' },
+            { front: 'tab', back: 'tablet' },
+            { front: 'cap', back: 'capsule' },
+            { front: 'gtt', back: 'drop' },
+            { front: 'stat', back: 'immediately' }
+        ];
+
+        // Practice history data
+        let practiceHistory = [];
+        
+        // Try to load from localStorage, but handle if it doesn't exist
+        try {
+            const stored = localStorage.getItem('sigPracticeHistory');
+            if (stored) {
+                practiceHistory = JSON.parse(stored);
+            }
+        } catch (e) {
+            practiceHistory = [];
+        }
+        
+        // Current states
+        let currentFlashcardIndex = 0;
+        let currentQuizQuestion = null;
+        let quizStats = { correct: 0, total: 0 };
+        let isFlipped = false;
+
+        // Prescription generator data
+        const prescriptionTemplates = [
+            // Pain medications
+            { sig: '1 tab po q4-6h prn pain', med: 'Ibuprofen 400mg Tablet', qty: 30, days: 10, refills: 2, patient: 'Smith, John', dob: '05/15/1985', prescriber: 'Dr. Johnson, MD', npi: '1234567890' },
+            { sig: 'ii tabs po q6h prn pain', med: 'Acetaminophen 325mg Tablet', qty: 60, days: 15, refills: 1, patient: 'Davis, Sarah', dob: '12/03/1992', prescriber: 'Dr. Williams, MD', npi: '2345678901' },
+            { sig: '1 tab po bid prn pain', med: 'Naproxen 500mg Tablet', qty: 30, days: 15, refills: 3, patient: 'Brown, Michael', dob: '08/22/1978', prescriber: 'Dr. Martinez, MD', npi: '3456789012' },
+            { sig: '1 tab po q4h prn severe pain', med: 'Hydrocodone 5mg Tablet', qty: 20, days: 5, refills: 0, patient: 'Wilson, Emma', dob: '03/10/2000', prescriber: 'Dr. Thompson, MD', npi: '4567890123' },
+            
+            // Antibiotics
+            { sig: '1 cap po tid x 10d', med: 'Amoxicillin 500mg Capsule', qty: 30, days: 10, refills: 0, patient: 'Jones, Robert', dob: '07/18/1988', prescriber: 'Dr. Anderson, MD', npi: '5678901234' },
+            { sig: 'ii caps po q12h x 7d', med: 'Cephalexin 500mg Capsule', qty: 14, days: 7, refills: 0, patient: 'Taylor, Lisa', dob: '11/25/1995', prescriber: 'Dr. Lee, MD', npi: '6789012345' },
+            { sig: '1 tab po qd x 5d', med: 'Azithromycin 250mg Tablet', qty: 5, days: 5, refills: 0, patient: 'Miller, James', dob: '04/07/1982', prescriber: 'Dr. White, MD', npi: '7890123456' },
+            { sig: '1 tab po bid x 10d', med: 'Augmentin 875mg Tablet', qty: 20, days: 10, refills: 0, patient: 'Garcia, Maria', dob: '09/14/1990', prescriber: 'Dr. Harris, MD', npi: '8901234567' },
+            
+            // Blood pressure
+            { sig: '1 tab po qd', med: 'Lisinopril 10mg Tablet', qty: 30, days: 30, refills: 5, patient: 'Smith, John', dob: '05/15/1985', prescriber: 'Dr. Johnson, MD', npi: '1234567890' },
+            { sig: '1 tab po qam', med: 'Amlodipine 5mg Tablet', qty: 30, days: 30, refills: 11, patient: 'Rodriguez, Carlos', dob: '02/28/1975', prescriber: 'Dr. Clark, MD', npi: '9012345678' },
+            { sig: 'ss tab po qhs', med: 'Metoprolol 25mg Tablet', qty: 15, days: 30, refills: 6, patient: 'Lee, Jennifer', dob: '06/30/1987', prescriber: 'Dr. Lewis, MD', npi: '0123456789' },
+            { sig: '1 tab po bid', med: 'Losartan 50mg Tablet', qty: 60, days: 30, refills: 5, patient: 'Walker, David', dob: '10/12/1980', prescriber: 'Dr. Hall, MD', npi: '1357924680' },
+            
+            // Diabetes
+            { sig: '1 tab po bid c meals', med: 'Metformin 500mg Tablet', qty: 60, days: 30, refills: 11, patient: 'Young, Patricia', dob: '01/20/1972', prescriber: 'Dr. Allen, MD', npi: '2468013579' },
+            { sig: 'ii tabs po qam c breakfast', med: 'Metformin 1000mg Tablet', qty: 60, days: 30, refills: 5, patient: 'King, Thomas', dob: '12/08/1965', prescriber: 'Dr. Wright, MD', npi: '3691472580' },
+            { sig: '1 tab po qd', med: 'Glipizide 5mg Tablet', qty: 30, days: 30, refills: 11, patient: 'Scott, Nancy', dob: '05/03/1978', prescriber: 'Dr. Green, MD', npi: '4702581369' },
+            
+            // Stomach/GI
+            { sig: '1 cap po qd ac breakfast', med: 'Omeprazole 20mg Capsule', qty: 30, days: 30, refills: 3, patient: 'Adams, Brian', dob: '08/16/1991', prescriber: 'Dr. Baker, MD', npi: '5813692470' },
+            { sig: '1 tab po bid ac meals', med: 'Pantoprazole 40mg Tablet', qty: 60, days: 30, refills: 5, patient: 'Hill, Susan', dob: '03/25/1984', prescriber: 'Dr. Nelson, MD', npi: '6924703581' },
+            { sig: '1 tab po qid prn nausea', med: 'Ondansetron 4mg Tablet', qty: 20, days: 10, refills: 0, patient: 'Carter, Kevin', dob: '11/09/1993', prescriber: 'Dr. Carter, MD', npi: '7035814692' },
+            
+            // Respiratory
+            { sig: '1 inh q4-6h prn', med: 'Albuterol HFA Inhaler', qty: 1, days: 30, refills: 3, patient: 'Mitchell, Amy', dob: '07/22/1989', prescriber: 'Dr. Mitchell, MD', npi: '8146925703' },
+            { sig: 'ii inh bid', med: 'Advair Diskus 250/50', qty: 1, days: 30, refills: 5, patient: 'Roberts, Daniel', dob: '04/11/1976', prescriber: 'Dr. Roberts, MD', npi: '9258036814' },
+            { sig: '10ml po q4h prn cough', med: 'Guaifenesin Syrup 100mg/5ml', qty: 120, days: 10, refills: 0, patient: 'Turner, Rachel', dob: '09/27/1996', prescriber: 'Dr. Turner, MD', npi: '0369147025' },
+            
+            // Sleep/Anxiety
+            { sig: '1 tab po qhs prn insomnia', med: 'Zolpidem 10mg Tablet', qty: 30, days: 30, refills: 2, patient: 'Phillips, Mark', dob: '02/14/1983', prescriber: 'Dr. Phillips, MD', npi: '1470258036' },
+            { sig: '1 tab po tid prn anxiety', med: 'Lorazepam 0.5mg Tablet', qty: 30, days: 30, refills: 0, patient: 'Campbell, Laura', dob: '06/05/1992', prescriber: 'Dr. Campbell, MD', npi: '2581369147' },
+            { sig: 'ss-i tab po qhs', med: 'Trazodone 50mg Tablet', qty: 30, days: 30, refills: 3, patient: 'Parker, Steven', dob: '10/19/1979', prescriber: 'Dr. Parker, MD', npi: '3692470258' },
+            
+            // Cholesterol
+            { sig: '1 tab po qhs', med: 'Atorvastatin 20mg Tablet', qty: 30, days: 30, refills: 11, patient: 'Evans, Michelle', dob: '01/08/1970', prescriber: 'Dr. Evans, MD', npi: '4703581369' },
+            { sig: '1 tab po qpm', med: 'Simvastatin 40mg Tablet', qty: 30, days: 30, refills: 5, patient: 'Edwards, Richard', dob: '12/21/1968', prescriber: 'Dr. Edwards, MD', npi: '5814692470' },
+            
+            // Eye/Ear drops
+            { sig: 'i-ii gtts ou qid', med: 'Latanoprost 0.005% Eye Drops', qty: 2.5, days: 30, refills: 5, patient: 'Collins, Angela', dob: '05/17/1986', prescriber: 'Dr. Collins, MD', npi: '6925703581' },
+            { sig: 'ii gtts ad tid', med: 'Ciprodex Otic Drops', qty: 7.5, days: 7, refills: 0, patient: 'Stewart, Jason', dob: '08/29/1994', prescriber: 'Dr. Stewart, MD', npi: '7036814692' },
+            { sig: 'i gtt os bid', med: 'Timolol 0.5% Eye Drops', qty: 5, days: 30, refills: 3, patient: 'Morris, Jessica', dob: '03/06/1988', prescriber: 'Dr. Morris, MD', npi: '8147925703' },
+            
+            // Topical
+            { sig: 'apply top bid', med: 'Hydrocortisone 1% Cream', qty: 30, days: 14, refills: 2, patient: 'Rogers, Christopher', dob: '11/13/1981', prescriber: 'Dr. Rogers, MD', npi: '9259036814' },
+            { sig: 'apply top tid prn itching', med: 'Triamcinolone 0.1% Cream', qty: 15, days: 10, refills: 1, patient: 'Reed, Nicole', dob: '07/24/1990', prescriber: 'Dr. Reed, MD', npi: '0370147025' },
+            { sig: 'apply top qhs', med: 'Tretinoin 0.025% Cream', qty: 20, days: 30, refills: 5, patient: 'Cook, Andrew', dob: '04/02/1985', prescriber: 'Dr. Cook, MD', npi: '1481258036' },
+            
+            // Thyroid
+            { sig: '1 tab po qam s food', med: 'Levothyroxine 50mcg Tablet', qty: 30, days: 30, refills: 11, patient: 'Morgan, Melissa', dob: '09/10/1977', prescriber: 'Dr. Morgan, MD', npi: '2592369147' },
+            
+            // Vitamins/Supplements
+            { sig: '1 tab po qd c food', med: 'Vitamin D3 1000 IU Tablet', qty: 90, days: 90, refills: 3, patient: 'Bell, Joshua', dob: '02/26/1987', prescriber: 'Dr. Bell, MD', npi: '3603470258' },
+            { sig: 'ii tabs po qd', med: 'Fish Oil 1000mg Softgel', qty: 60, days: 30, refills: 5, patient: 'Murphy, Amanda', dob: '06/18/1992', prescriber: 'Dr. Murphy, MD', npi: '4714581369' }
+        ];
+
+        let currentPrescription = null;
+        let showingSigCode = false;
+
+        function generateRandomPrescription() {
+            currentPrescription = prescriptionTemplates[Math.floor(Math.random() * prescriptionTemplates.length)];
+            showingSigCode = false;
+            
+            // Update the incoming e-prescription display
+            document.getElementById('rxPatient').textContent = currentPrescription.patient;
+            document.getElementById('rxDOB').textContent = currentPrescription.dob;
+            document.getElementById('rxPrescriber').textContent = currentPrescription.prescriber;
+            document.getElementById('rxNPI').textContent = currentPrescription.npi;
+            document.getElementById('rxMedication').textContent = currentPrescription.med;
+            document.getElementById('rxQuantity').textContent = '#' + currentPrescription.qty;
+            document.getElementById('rxRefills').textContent = currentPrescription.refills;
+            document.getElementById('rxDays').textContent = currentPrescription.days;
+            
+            // Show directions by default, hide sig code
+            const correctTranslation = translateSig(currentPrescription.sig);
+            document.getElementById('rxDirections').textContent = correctTranslation;
+            document.getElementById('rxSigCode').textContent = currentPrescription.sig;
+            document.getElementById('rxDirections').style.display = 'block';
+            document.getElementById('rxSigCode').style.display = 'none';
+            document.getElementById('toggleBtn').textContent = 'Show Sig Code';
+            
+            // Clear the input and feedback
+            document.getElementById('sigInput').value = '';
+            document.getElementById('translationFeedback').style.display = 'none';
+            
+            // Update the label
+            document.getElementById('translatedText').textContent = 'Enter sig code to see your translation';
+            
+            // Optional: Add animation
+            const rxBox = document.getElementById('incomingRx');
+            rxBox.style.animation = 'none';
+            setTimeout(() => {
+                rxBox.style.animation = 'slideIn 0.5s ease-out';
+            }, 10);
+        }
+
+        function toggleSigView() {
+            showingSigCode = !showingSigCode;
+            
+            if (showingSigCode) {
+                document.getElementById('rxDirections').style.display = 'none';
+                document.getElementById('rxSigCode').style.display = 'block';
+                document.getElementById('toggleBtn').textContent = 'Show Directions';
+            } else {
+                document.getElementById('rxDirections').style.display = 'block';
+                document.getElementById('rxSigCode').style.display = 'none';
+                document.getElementById('toggleBtn').textContent = 'Show Sig Code';
+            }
+        }
+
+        function checkTranslation() {
+            if (!currentPrescription) {
+                alert('Please generate a prescription first!');
+                return;
+            }
+
+            const userInput = document.getElementById('sigInput').value.trim().toLowerCase();
+            const correctSig = currentPrescription.sig.toLowerCase();
+            const correctTranslation = translateSig(currentPrescription.sig);
+
+            const feedbackDiv = document.getElementById('translationFeedback');
+            
+            if (userInput === '') {
+                alert('Please enter a sig code first!');
+                return;
+            }
+            
+            // Check if user input matches the correct sig code
+            if (userInput === correctSig) {
+                feedbackDiv.innerHTML = `
+                    <div style="background: #d4edda; border: 2px solid #28a745; padding: 20px; border-radius: 10px;">
+                        <h3 style="color: #155724; margin-bottom: 10px;">✓ Perfect!</h3>
+                        <p style="color: #155724;"><strong>Your sig code:</strong> ${userInput}</p>
+                        <p style="color: #155724; font-size: 1.1em; margin-top: 10px;"><strong>Translation:</strong> ${correctTranslation}</p>
+                    </div>
+                `;
+                feedbackDiv.style.display = 'block';
+                
+                // Update the pharmacy label
+                document.getElementById('translatedText').textContent = correctTranslation;
+                document.querySelectorAll('.field-value')[4].textContent = currentPrescription.med;
+            } else {
+                // Show what they entered vs what was expected
+                const userTranslation = translateSig(userInput);
+                feedbackDiv.innerHTML = `
+                    <div style="background: #fff3cd; border: 2px solid #ffc107; padding: 20px; border-radius: 10px;">
+                        <h3 style="color: #856404; margin-bottom: 10px;">⚠️ Not Quite Right</h3>
+                        <p style="color: #856404;"><strong>You entered:</strong> ${userInput}</p>
+                        <p style="color: #856404; margin-top: 5px;"><em>Which translates to: ${userTranslation}</em></p>
+                        <hr style="margin: 15px 0; border: none; border-top: 1px solid #ffc107;">
+                        <p style="color: #856404;"><strong>Correct sig code:</strong> ${correctSig}</p>
+                        <p style="color: #856404; margin-top: 5px;"><em>Which translates to: ${correctTranslation}</em></p>
+                    </div>
+                `;
+                feedbackDiv.style.display = 'block';
+            }
+        }
+
+        // Tab switching
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+
+            if (tabName === 'history') {
+                renderHistory();
+            } else if (tabName === 'flashcards') {
+                initFlashcards();
+            } else if (tabName === 'quiz') {
+                initQuiz();
+            }
+        }
+
+        // Translator functions
+        function translateSig(input) {
+            let translated = input.toLowerCase();
+            translated = translated.replace(/(\d+)\s*-\s*(\d+)/g, '$1 to $2');
+            
+            for (let [code, meaning] of Object.entries(sigCodes)) {
+                const regex = new RegExp('\\b' + code + '\\b', 'gi');
+                translated = translated.replace(regex, meaning);
+            }
+            
+            translated = translated.charAt(0).toUpperCase() + translated.slice(1);
+            translated = translated.replace(/as needed for/gi, 'as needed for');
+            
+            if (!translated.match(/^(take|apply|insert|instill|use|inhale)/i)) {
+                if (translated.match(/topically|in (both )?eye|in (both )?ear|rectally|vaginally/i)) {
+                    if (translated.match(/topically/i)) {
+                        translated = 'Apply ' + translated;
+                    } else if (translated.match(/in (both )?eye/i) || translated.match(/in (both )?ear/i)) {
+                        translated = 'Instill ' + translated;
+                    } else {
+                        translated = 'Insert ' + translated;
+                    }
+                } else if (translated.match(/inhale/i)) {
+                    translated = translated.charAt(0).toUpperCase() + translated.slice(1);
+                } else {
+                    translated = 'Take ' + translated;
+                }
+            }
+            
+            return translated;
+        }
+
+        function updateTranslation() {
+            const input = document.getElementById('sigInput').value.trim();
+            const translatedText = document.getElementById('translatedText');
+            if (input) {
+                translatedText.textContent = translateSig(input);
+            } else {
+                translatedText.textContent = 'Enter sig code above to see translation';
+            }
+        }
+
+        function searchCodes() {
+            const searchTerm = document.getElementById('searchBox').value.toLowerCase();
+            const codeItems = document.querySelectorAll('#cheatSheet .code-item');
+            const headers = document.querySelectorAll('#cheatSheet h3');
+            
+            codeItems.forEach(item => {
+                const abbr = item.querySelector('.code-abbr').textContent.toLowerCase();
+                const meaning = item.querySelector('.code-meaning').textContent.toLowerCase();
+                
+                if (abbr.includes(searchTerm) || meaning.includes(searchTerm)) {
+                    item.style.display = 'flex';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+            
+            headers.forEach(header => {
+                let nextEl = header.nextElementSibling;
+                let hasVisibleItems = false;
+                
+                while (nextEl && !nextEl.tagName.match(/H3/)) {
+                    if (nextEl.classList.contains('code-item') && nextEl.style.display !== 'none') {
+                        hasVisibleItems = true;
+                        break;
+                    }
+                    nextEl = nextEl.nextElementSibling;
+                }
+                
+                header.style.display = hasVisibleItems || searchTerm === '' ? 'block' : 'none';
+            });
+        }
+
+        // Flashcard functions
+        function initFlashcards() {
+            currentFlashcardIndex = 0;
+            document.getElementById('totalCards').textContent = flashcards.length;
+            showFlashcard();
+        }
+
+        function showFlashcard() {
+            const card = flashcards[currentFlashcardIndex];
+            document.getElementById('cardFront').textContent = card.front;
+            document.getElementById('cardBack').textContent = card.back;
+            document.getElementById('cardCounter').textContent = currentFlashcardIndex + 1;
+            document.getElementById('flashcard').classList.remove('flipped');
+            isFlipped = false;
+        }
+
+        function flipCard() {
+            document.getElementById('flashcard').classList.toggle('flipped');
+            isFlipped = !isFlipped;
+        }
+
+        function nextCard() {
+            currentFlashcardIndex = (currentFlashcardIndex + 1) % flashcards.length;
+            showFlashcard();
+        }
+
+        function previousCard() {
+            currentFlashcardIndex = (currentFlashcardIndex - 1 + flashcards.length) % flashcards.length;
+            showFlashcard();
+        }
+
+        function markKnown() {
+            const card = flashcards[currentFlashcardIndex];
+            addToHistory(card.front, card.back, 100);
+            nextCard();
+        }
+
+        // Quiz functions
+        function initQuiz() {
+            nextQuestion();
+        }
+
+        function nextQuestion() {
+            currentQuizQuestion = quizQuestions[Math.floor(Math.random() * quizQuestions.length)];
+            document.getElementById('quizSigCode').textContent = currentQuizQuestion.code;
+            document.getElementById('quizAnswer').value = '';
+            document.getElementById('quizFeedback').innerHTML = '';
+            document.getElementById('quizAnswer').focus();
+        }
+
+        function checkAnswer() {
+            const userAnswer = document.getElementById('quizAnswer').value.trim().toLowerCase();
+            const correctAnswer = currentQuizQuestion.answer.toLowerCase();
+            const feedback = document.getElementById('quizFeedback');
+            
+            // Calculate similarity
+            const similarity = calculateSimilarity(userAnswer, correctAnswer);
+            const isCorrect = similarity > 0.8;
+            
+            quizStats.total++;
+            if (isCorrect) {
+                quizStats.correct++;
+                feedback.className = 'quiz-feedback correct';
+                feedback.innerHTML = '✓ Correct! ' + currentQuizQuestion.answer;
+            } else {
+                feedback.className = 'quiz-feedback incorrect';
+                feedback.innerHTML = '✗ Not quite. The correct answer is: ' + currentQuizQuestion.answer;
+            }
+            
+            updateQuizStats();
+            addToHistory(currentQuizQuestion.code, currentQuizQuestion.answer, isCorrect ? 100 : Math.round(similarity * 100));
+        }
+
+        function calculateSimilarity(str1, str2) {
+            const words1 = str1.split(/\s+/);
+            const words2 = str2.split(/\s+/);
+            let matches = 0;
+            
+            for (let word of words1) {
+                if (words2.some(w => w.includes(word) || word.includes(w))) {
+                    matches++;
+                }
+            }
+            
+            return matches / Math.max(words1.length, words2.length);
+        }
+
+        function updateQuizStats() {
+            document.getElementById('quizCorrect').textContent = quizStats.correct;
+            document.getElementById('quizTotal').textContent = quizStats.total;
+            const accuracy = quizStats.total > 0 ? Math.round((quizStats.correct / quizStats.total) * 100) : 0;
+            document.getElementById('quizAccuracy').textContent = accuracy + '%';
+        }
+
+        // History functions
+        function addToHistory(code, translation, score) {
+            const historyItem = {
+                code: code,
+                translation: translation,
+                score: score,
+                date: new Date().toLocaleDateString()
+            };
+            
+            practiceHistory.unshift(historyItem);
+            if (practiceHistory.length > 50) {
+                practiceHistory = practiceHistory.slice(0, 50);
+            }
+            
+            try {
+                localStorage.setItem('sigPracticeHistory', JSON.stringify(practiceHistory));
+            } catch (e) {
+                console.log('Could not save to localStorage');
+            }
+        }
+
+        function renderHistory() {
+            const container = document.getElementById('historyContainer');
+            
+            if (practiceHistory.length === 0) {
+                container.innerHTML = `
+                    <div class="history-empty">
+                        <div class="history-empty-icon">📝</div>
+                        <h2>No practice history yet</h2>
+                        <p>Complete some quizzes or flashcards to see your progress here!</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            let html = '';
+            practiceHistory.forEach(item => {
+                let scoreClass = 'good';
+                if (item.score < 50) scoreClass = 'poor';
+                else if (item.score < 80) scoreClass = 'okay';
+                
+                html += `
+                    <div class="history-item">
+                        <div>
+                            <div class="history-code">${item.code}</div>
+                            <div class="history-translation">${item.translation}</div>
+                            <div style="font-size: 0.85em; color: #999; margin-top: 5px;">${item.date}</div>
+                        </div>
+                        <div class="history-score">
+                            <div class="score-circle ${scoreClass}">${item.score}%</div>
+                            <div style="font-size: 0.85em; color: #666;">Score</div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+        }
+
+        function clearHistory() {
+            if (confirm('Are you sure you want to clear all practice history?')) {
+                practiceHistory = [];
+                try {
+                    localStorage.setItem('sigPracticeHistory', JSON.stringify(practiceHistory));
+                } catch (e) {
+                    console.log('Could not clear localStorage');
+                }
+                renderHistory();
+            }
+        }
+
+        // Event listeners
+        document.getElementById('sigInput').addEventListener('input', updateTranslation);
+        document.getElementById('searchBox').addEventListener('input', searchCodes);
+        document.getElementById('quizAnswer').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                checkAnswer();
+            }
+        });
+
+        // Initialize
+        updateTranslation();
+        updateQuizStats();
+        generateRandomPrescription();
+    </script>
+</body>
+</html>
