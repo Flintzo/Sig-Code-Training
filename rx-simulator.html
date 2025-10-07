@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PrimeRX Training Simulator</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f0f2f5; height: 100vh; overflow: hidden; }
+        .app-header { background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); color: white; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; }
+        .app-title { font-size: 1.5em; font-weight: bold; }
+        .training-badge { background: #ff9800; color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.7em; margin-left: 10px; }
+        .main-container { display: flex; height: calc(100vh - 60px); }
+        .sidebar { width: 200px; background: #2c3e50; color: white; padding: 20px 0; }
+        .menu-item { padding: 15px 20px; cursor: pointer; transition: background 0.3s; }
+        .menu-item:hover { background: #34495e; }
+        .menu-item.active { background: #3498db; border-left: 4px solid white; }
+        .content-area { flex: 1; padding: 20px; overflow-y: auto; }
+        .content-header { background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .btn { padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; transition: all 0.3s; }
+        .btn-primary { background: #3498db; color: white; }
+        .btn-secondary { background: #95a5a6; color: white; }
+        .btn-success { background: #27ae60; color: white; }
+        .hidden { display: none; }
+        .view-content { display: none; }
+        .view-content.active { display: block; }
+        .queue-item { background: white; padding: 15px; margin: 10px 0; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; }
+        .controlled-badge { background: #e74c3c; color: white; padding: 3px 8px; border-radius: 12px; font-size: 0.8em; margin-left: 10px; }
+        .pa-badge { background: #f39c12; color: white; padding: 3px 8px; border-radius: 12px; font-size: 0.8em; margin-left: 10px; }
+        .detail-section { background: white; padding: 20px; margin: 10px 0; border-radius: 8px; }
+        .form-group { margin-bottom: 15px; }
+        .form-label { display: block; font-weight: bold; margin-bottom: 5px; }
+        .form-input { width: 100%; padding: 10px; border: 2px solid #ddd; border-radius: 6px; }
+        .form-input.error { border-color: #e74c3c; background: #ffebee; }
+        .alert { padding: 15px; border-radius: 6px; margin-bottom: 20px; }
+        .alert-info { background: #e3f2fd; color: #1976d2; }
+        .alert-danger { background: #ffebee; color: #c62828; }
+        .alert-warning { background: #fff3e0; color: #f57c00; }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; }
+        .modal.active { display: flex; }
+        .modal-content { background: white; border-radius: 10px; padding: 30px; max-width: 800px; width: 90%; max-height: 80vh; overflow-y: auto; }
+        .draggable-window { position: fixed; background: white; border-radius: 10px; box-shadow: 0 10px 40px rgba(0,0,0,0.3); z-index: 2000; min-width: 400px; display: none; }
+        .draggable-window.active { display: block; }
+        .window-header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 12px 15px; border-radius: 10px 10px 0 0; cursor: move; display: flex; justify-content: space-between; }
+        .window-close { background: rgba(255,255,255,0.2); border: none; color: white; width: 24px; height: 24px; border-radius: 50%; cursor: pointer; }
+        .window-content { padding: 20px; max-height: 500px; overflow-y: auto; }
+        .sig-translation { background: #e8f5e9; padding: 10px; border-radius: 5px; margin-top: 5px; color: #2e7d32; font-style: italic; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); }}
+    </style>
+</head>
+<body>
+    <div class="app-header">
+        <div class="app-title">PrimeRX <span class="training-badge">TRAINING MODE</span></div>
+        <div>Trainee User | <span id="currentDate"></span> | Queue: <span id="queueCount">0</span></div>
+    </div>
+    <div class="main-container">
+        <div class="sidebar">
+            <div class="menu-item active" onclick="switchView('queue')">Rx Queue</div>
+            <div class="menu-item" onclick="switchView('patients')">Patients</div>
+            <div class="menu-item" onclick="switchView('newpatient')">New Patient</div>
+            <div class="menu-item" onclick="switchView('reports')">Reports</div>
+        </div>
+        <div class="content-area">
+            <div id="queueView" class="view-content active">
+                <div class="content-header">
+                    <h2>E-Prescription Queue</h2>
+                    <button class="btn btn-primary" onclick="generateNewRx()" style="float: right;">Simulate New Rx</button>
+                </div>
+                <div id="rxQueue"></div>
+            </div>
+
+            <div id="patientsView" class="view-content">
+                <div class="content-header"><h2>Patient Management</h2></div>
+                <div id="patientsList"></div>
+            </div>
+
+            <div id="newpatientView" class="view-content">
+                <div class="content-header"><h2>New Patient Registration</h2></div>
+                <div class="detail-section">
+                    <h3>Patient Demographics</h3>
+                    <div class="form-group">
+                        <label class="form-label">First Name *</label>
+                        <input type="text" class="form-input" id="newFirstName">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Last Name *</label>
+                        <input type="text" class="form-input" id="newLastName">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Date of Birth *</label>
+                        <input type="text" class="form-input" id="newDOB" placeholder="MM/DD/YYYY">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Phone *</label>
+                        <input type="tel" class="form-input" id="newPhone" placeholder="555-1234">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Address *</label>
+                        <input type="text" class="form-input" id="newAddress" placeholder="123 Main St">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Insurance</label>
+                        <input type="text" class="form-input" id="newInsurance" placeholder="e.g., BCBS, Aetna, Cash">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Insurance ID</label>
+                        <input type="text" class="form-input" id="newInsuranceId">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Known Allergies</label>
+                        <input type="text" class="form-input" id="newAllergies" placeholder="None or list allergies">
+                    </div>
+                </div>
+                <button class="btn btn-success" onclick="saveNewPatient()">Register Patient</button>
+            </div>
+
+            <div id="reportsView" class="view-content">
+                <div class="content-header"><h2>Reports & Analytics</h2></div>
+                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px;">
+                    <div style="background: white; padding: 20px; border-radius: 10px; text-align: center;">
+                        <div style="font-size: 2em; color: #3498db;" id="totalProcessed">0</div>
+                        <div>Processed</div>
+                    </div>
+                    <div style="background: white; padding: 20px; border-radius: 10px; text-align: center;">
+                        <div style="font-size: 2em; color: #e74c3c;" id="controlledCount">0</div>
+                        <div>Controlled</div>
+                    </div>
+                    <div style="background: white; padding: 20px; border-radius: 10px; text-align: center;">
+                        <div style="font-size: 2em; color: #f39c12;" id="paCount">0</div>
+                        <div>Prior Auths</div>
+                    </div>
+                    <div style="background: white; padding: 20px; border-radius: 10px; text-align: center;">
+                        <div style="font-size: 2em; color: #9b59b6;" id="patientCount">2</div>
+                        <div>Patients</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="processModal" class="modal">
+        <div class="modal-content">
+            <h2>Processing Prescription - Step <span id="stepNum">1</span> of 7</h2>
+            <div id="stepContent"></div>
+            <div style="margin-top: 20px;">
+                <button class="btn btn-secondary" onclick="closeProcessModal()">Cancel</button>
+                <button class="btn btn-primary" id="nextBtn" onclick="handleNext()">Continue</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="patientProfileWindow" class="draggable-window">
+        <div class="window-header" id="profileHeader">
+            <span>Patient Profile</span>
+            <button class="window-close" onclick="closePatientProfile()">×</button>
+        </div>
+        <div class="window-content" id="profileContent"></div>
+    </div>
+
+    <div id="prescriptionWindow" class="draggable-window">
+        <div class="window-header" id="prescriptionHeader">
+            <span>Prescription</span>
+            <button class="window-close" onclick="closePrescriptionWindow()">×</button>
+        </div>
+        <div class="window-content" id="rxWindowContent"></div>
+    </div>
+
+    <script>
+        document.getElementById('currentDate').textContent = new Date().toLocaleDateString();
+
+        const medications = [
+            {name: 'Lisinopril 10mg', directions: 'Take 1 tablet by mouth once daily', sig: '1 tab po qd', qty: 30, days: 30, controlled: false, pa: false},
+            {name: 'Metformin 500mg', directions: 'Take 1 tablet by mouth twice daily with meals', sig: '1 tab po bid w/meals', qty: 60, days: 30, controlled: false, pa: false},
+            {name: 'Hydrocodone 5mg', directions: 'Take 1 tablet every 4-6 hours as needed for pain', sig: '1 tab po q4-6h prn pain', qty: 30, days: 10, controlled: 'C-II', pa: false},
+            {name: 'Xanax 0.5mg', directions: 'Take 1 tablet three times daily as needed', sig: '1 tab po tid prn', qty: 90, days: 30, controlled: 'C-IV', pa: false},
+            {name: 'Amoxicillin 500mg', directions: 'Take 1 capsule by mouth three times daily', sig: '1 cap po tid', qty: 21, days: 7, controlled: false, pa: false},
+            {name: 'Humira 40mg', directions: 'Inject 40mg subcutaneously every 2 weeks', sig: 'inject 40mg subq q2wk', qty: 2, days: 28, controlled: false, pa: true},
+            {name: 'Lantus 100u/mL', directions: 'Inject 20 units subcutaneously at bedtime', sig: 'inject 20u subq qhs', qty: 10, days: 30, controlled: false, pa: false},
+            {name: 'Albuterol Inhaler', directions: 'Inhale 2 puffs every 4-6 hours as needed', sig: '2 puffs inh q4-6h prn', qty: 1, days: 30, controlled: false, pa: false}
+        ];
+
+        let rxQueue = [];
+        let patients = [
+            {name: 'Smith, John', dob: '03/15/1978', phone: '555-1234', address: '123 Main St', insurance: 'BCBS', insuranceId: 'ABC123456789', allergies: 'Penicillin', lastFills: {}},
+            {name: 'Davis, Sarah', dob: '07/22/1985', phone: '555-5678', address: '456 Oak Ave', insurance: 'Aetna', insuranceId: 'XYZ987654321', allergies: 'None', lastFills: {}}
+        ];
+        let currentRx = null;
+        let currentStep = 1;
+        let stats = {processed: 0, controlled: 0, pa: 0};
+        let enteredData = {};
+
+        function generateNewRx() {
+            const med = medications[Math.floor(Math.random() * medications.length)];
+            const patient = patients[Math.floor(Math.random() * patients.length)];
+            
+            const rx = {
+                id: Date.now(),
+                medication: med.name,
+                directions: med.directions,
+                sig: med.sig,
+                quantity: med.qty,
+                daysSupply: med.days,
+                refills: Math.floor(Math.random() * 6),
+                controlled: med.controlled,
+                requiresPA: med.pa,
+                patientName: patient.name,
+                patientPhone: patient.phone,
+                patientInsurance: patient.insurance
+            };
+
+            const lastFill = patient.lastFills[med.name];
+            if (lastFill) {
+                const daysSince = Math.floor((Date.now() - lastFill) / (1000 * 60 * 60 * 24));
+                if (daysSince < med.days * 0.75) {
+                    rx.tooSoon = true;
+                    rx.daysSince = daysSince;
+                }
+            }
+
+            rxQueue.push(rx);
+            renderQueue();
+        }
+
+        function renderQueue() {
+            document.getElementById('queueCount').textContent = rxQueue.length;
+            const html = rxQueue.map((rx, idx) => {
+                let badges = '';
+                if (rx.controlled) badges += '<span class="controlled-badge">' + rx.controlled + '</span>';
+                if (rx.requiresPA) badges += '<span class="pa-badge">PA</span>';
+                if (rx.tooSoon) badges += '<span class="pa-badge">Too Soon</span>';
+                
+                return '<div class="queue-item"><div><strong>' + rx.patientName + '</strong> - ' + rx.medication + badges + '<br><small>' + rx.directions + '</small></div><div><button class="btn btn-primary" onclick="processRx(' + idx + ')">Process</button></div></div>';
+            }).join('');
+            document.getElementById('rxQueue').innerHTML = html || '<p style="padding: 40px; text-align: center;">No prescriptions. Click "Simulate New Rx"</p>';
+        }
+
+        function processRx(idx) {
+            currentRx = rxQueue[idx];
+            currentStep = 1;
+            document.getElementById('processModal').classList.add('active');
+            updateStep();
+        }
+
+        function updateStep() {
+            document.getElementById('stepNum').textContent = currentStep;
+            const content = document.getElementById('stepContent');
+            
+            if (currentStep === 1) {
+                content.innerHTML = '<div class="detail-section"><h3>New Prescription Received</h3><p><strong>Patient:</strong> ' + currentRx.patientName + '</p><p><strong>Medication:</strong> ' + currentRx.medication + '</p><p><strong>Directions:</strong> ' + currentRx.directions + '</p><p><strong>Quantity:</strong> ' + currentRx.quantity + '</p><p><strong>Days Supply:</strong> ' + currentRx.daysSupply + '</p><p><strong>Refills:</strong> ' + currentRx.refills + '</p></div>';
+            } else if (currentStep === 2) {
+                if (currentRx.tooSoon) {
+                    content.innerHTML = '<div class="alert alert-warning"><strong>⚠️ Refill Too Soon!</strong><br>Last fill was ' + currentRx.daysSince + ' days ago. Days supply was ' + currentRx.daysSupply + ' days.<br><button class="btn btn-secondary" onclick="overrideTooSoon()" style="margin-top:10px;">Override with Note</button> <button class="btn btn-primary" onclick="contactPatient()" style="margin-top:10px;">Contact Patient</button></div>';
+                    return;
+                }
+                if (currentRx.controlled) {
+                    content.innerHTML = '<div class="alert alert-danger"><strong>🔒 Controlled Substance: ' + currentRx.controlled + '</strong><br>Federal law requires verification of:<br>- Valid DEA number<br>- Prescription date within 30 days<br>- Patient ID verification<br>- Physical prescription for C-II<br><button class="btn btn-success" onclick="verifyControlled()" style="margin-top:10px;">✓ Verified - Continue</button></div>';
+                    return;
+                }
+                if (currentRx.requiresPA) {
+                    content.innerHTML = '<div class="alert alert-warning"><strong>Prior Authorization Required</strong><br>This medication requires insurance pre-approval.<br><button class="btn btn-success" onclick="submitPA()" style="margin-top:10px;">Submit PA Request</button> <button class="btn btn-secondary" onclick="skipPA()" style="margin-top:10px;">Process as Cash</button></div>';
+                    return;
+                }
+                
+                content.innerHTML = '<div class="alert alert-info">No alerts detected. Proceeding with verification.</div>';
+                setTimeout(() => { currentStep++; updateStep(); }, 1000);
+            } else if (currentStep === 3) {
+                const patient = patients.find(p => p.name === currentRx.patientName);
+                content.innerHTML = '<div class="detail-section"><h3>Verify Patient Information</h3><p><strong>Name:</strong> ' + patient.name + '</p><p><strong>DOB:</strong> ' + patient.dob + '</p><p><strong>Phone:</strong> ' + patient.phone + '</p><p><strong>Address:</strong> ' + patient.address + '</p><p><strong>Allergies:</strong> <span style="color: #e74c3c; font-weight: bold;">' + patient.allergies + '</span></p><button class="btn btn-primary" onclick="showPatientProfile()" style="margin-top: 10px;">View Full Profile</button><div style="margin-top: 15px;"><label><input type="checkbox" id="verifyPatient"> I have verified patient identity and information is correct</label></div></div>';
+                document.getElementById('nextBtn').onclick = () => {
+                    if (!document.getElementById('verifyPatient').checked) {
+                        alert('You must verify patient information before continuing');
+                        return;
+                    }
+                    currentStep++;
+                    updateStep();
+                };
+            } else if (currentStep === 4) {
+                const patient = patients.find(p => p.name === currentRx.patientName);
+                content.innerHTML = '<div class="detail-section"><h3>Verify Insurance Information</h3><p><strong>Insurance:</strong> ' + patient.insurance + '</p><p><strong>Member ID:</strong> ' + patient.insuranceId + '</p><p><strong>Group:</strong> GRP001</p><div style="margin-top: 15px;"><label><input type="checkbox" id="verifyInsurance"> Insurance card verified and information entered correctly</label></div></div>';
+                document.getElementById('nextBtn').onclick = () => {
+                    if (!document.getElementById('verifyInsurance').checked) {
+                        alert('You must verify insurance information before continuing');
+                        return;
+                    }
+                    currentStep++;
+                    updateStep();
+                };
+            } else if (currentStep === 5) {
+                content.innerHTML = '<div class="detail-section"><h3>Enter Prescription Data</h3><button class="btn btn-primary" onclick="showPrescriptionWindow()">📄 View Prescription</button><div class="form-group" style="margin-top: 15px;"><label class="form-label">Quantity *</label><input type="number" class="form-input" id="enteredQty" placeholder="Expected: ' + currentRx.quantity + '"></div><div class="form-group"><label class="form-label">Days Supply *</label><input type="number" class="form-input" id="enteredDays" placeholder="Expected: ' + currentRx.daysSupply + '"></div><div class="form-group"><label class="form-label">Refills *</label><input type="number" class="form-input" id="enteredRefills" min="0" max="5" placeholder="Expected: ' + currentRx.refills + '"></div><div class="form-group"><label class="form-label">Sig Code * <small>(e.g., 1 tab po qd)</small></label><input type="text" class="form-input" id="enteredSig" oninput="translateSigLive()" placeholder="Expected: ' + currentRx.sig + '"><div class="sig-translation" id="liveTranslation">Type to see translation...</div></div></div>';
+                document.getElementById('nextBtn').onclick = () => {
+                    const qty = document.getElementById('enteredQty').value;
+                    const days = document.getElementById('enteredDays').value;
+                    const sig = document.getElementById('enteredSig').value;
+                    const refills = document.getElementById('enteredRefills').value;
+                    
+                    if (!qty || !days || !sig || !refills) {
+                        alert('All fields are required');
+                        return;
+                    }
+                    
+                    let errors = [];
+                    if (parseInt(qty) !== currentRx.quantity) errors.push('Quantity incorrect (Expected: ' + currentRx.quantity + ', Entered: ' + qty + ')');
+                    if (parseInt(days) !== currentRx.daysSupply) errors.push('Days Supply incorrect (Expected: ' + currentRx.daysSupply + ', Entered: ' + days + ')');
+                    if (parseInt(refills) !== currentRx.refills) errors.push('Refills incorrect (Expected: ' + currentRx.refills + ', Entered: ' + refills + ')');
+                    if (sig.toLowerCase().trim() !== currentRx.sig.toLowerCase().trim()) errors.push('Sig code incorrect (Expected: ' + currentRx.sig + ', Entered: ' + sig + ')');
+                    
+                    if (errors.length > 0) {
+                        alert('❌ Data Entry Errors:\n\n' + errors.join('\n') + '\n\nPlease correct and try again.');
+                        errors.forEach(err => {
+                            if (err.includes('Quantity')) document.getElementById('enteredQty').classList.add('error');
+                            if (err.includes('Days')) document.getElementById('enteredDays').classList.add('error');
+                            if (err.includes('Sig')) document.getElementById('enteredSig').classList.add('error');
+                            if (err.includes('Refills')) document.getElementById('enteredRefills').classList.add('error');
+                        });
+                        return;
+                    }
+                    
+                    enteredData = {qty, days, sig, refills};
+                    currentStep++;
+                    updateStep();
+                };
+            } else if (currentStep === 6) {
+                content.innerHTML = '<div class="detail-section"><p>⏳ Submitting claim to insurance...</p><div style="text-align: center; margin: 20px 0;"><div style="display: inline-block; width: 50px; height: 50px; border: 5px solid #f3f3f3; border-top: 5px solid #3498db; border-radius: 50%; animation: spin 1s linear infinite;"></div></div></div>';
+                document.getElementById('nextBtn').style.display = 'none';
+                setTimeout(() => {
+                    const approved = Math.random() > 0.2;
+                    if (approved) {
+                        content.innerHTML = '<div class="detail-section" style="background: #e8f5e9; border: 2px solid #27ae60;"><h3 style="color: #27ae60;">✓ Claim Approved</h3><p><strong>Copay:</strong> $' + (Math.random() * 50 + 5).toFixed(2) + '</p><p><strong>Plan Pays:</strong> $' + (Math.random() * 200 + 50).toFixed(2) + '</p><p><strong>Claim #:</strong> CLM' + Math.floor(Math.random() * 1000000) + '</p></div>';
+                    } else {
+                        content.innerHTML = '<div class="alert alert-danger"><strong>❌ Claim Rejected</strong><br>Reason: Prior Authorization Required<br><button class="btn btn-primary" onclick="resubmitWithPA()" style="margin-top:10px;">Resubmit with PA</button> <button class="btn btn-secondary" onclick="processAsCash()" style="margin-top:10px;">Process as Cash</button></div>';
+                        return;
+                    }
+                    document.getElementById('nextBtn').style.display = 'inline-block';
+                    document.getElementById('nextBtn').onclick = handleNext;
+                }, 2000);
+            } else if (currentStep === 7) {
+                content.innerHTML = '<div class="detail-section"><h3>Final Review - Label Preview</h3><div style="border: 2px solid #333; padding: 20px; background: white; font-family: monospace;"><p><strong>' + currentRx.patientName + '</strong></p><p>' + currentRx.medication + '</p><p><strong>Qty:</strong> ' + enteredData.qty + ' | <strong>Refills:</strong> ' + enteredData.refills + '</p><p style="margin-top: 10px; padding: 10px; background: #fffef0;"><strong>Directions:</strong><br>' + currentRx.directions + '</p><p style="margin-top: 10px; font-size: 0.85em;">Prescriber: Dr. Johnson | Date: ' + new Date().toLocaleDateString() + '</p></div><div style="margin-top: 15px;"><label><input type="checkbox" id="finalReview"> I have reviewed all information and it is correct</label></div></div>';
+                document.getElementById('nextBtn').textContent = '✓ Complete & Print Label';
+                document.getElementById('nextBtn').className = 'btn btn-success';
+                document.getElementById('nextBtn').onclick = () => {
+                    if (!document.getElementById('finalReview').checked) {
+                        alert('You must complete final review before finishing');
+                        return;
+                    }
+                    completePrescription();
+                };
+            }
+        }
+
+        function handleNext() {
+            document.querySelectorAll('.form-input').forEach(input => input.classList.remove('error'));
+            currentStep++;
+            updateStep();
+        }
+
+        function completePrescription() {
+            stats.processed++;
+            if (currentRx.controlled) stats.controlled++;
+            if (currentRx.requiresPA) stats.pa++;
+            
+            const patient = patients.find(p => p.name === currentRx.patientName);
+            if (patient) {
+                patient.lastFills[currentRx.medication] = Date.now();
+            }
+            
+            rxQueue = rxQueue.filter(rx => rx.id !== currentRx.id);
+            
+            alert('✓ Prescription completed successfully!');
+            closeProcessModal();
+            
+            updateReports();
+            setTimeout(() => generateNewRx(), 2000);
+        }
+
+        function overrideTooSoon() {
+            const reason = prompt('Enter override reason:');
+            if (reason && reason.trim()) {
+                alert('Override approved. Note added to prescription.');
+                currentRx.tooSoon = false;
+                currentStep++;
+                updateStep();
+            }
+        }
+
+        function contactPatient() {
+            alert('Patient contacted. Patient will pick up on appropriate date.');
+            closeProcessModal();
+        }
+
+        function verifyControlled() {
+            currentRx.controlled = false;
+            currentStep++;
+            updateStep();
+        }
+
+        function submitPA() {
+            alert('Prior Authorization request submitted. Processing as PA pending.');
+            currentRx.requiresPA = false;
+            currentStep++;
+            updateStep();
+        }
+
+        function skipPA() {
+            alert('Processing prescription as cash payment.');
+            currentRx.requiresPA = false;
+            currentStep++;
+            updateStep();
+        }
+
+        function resubmitWithPA() {
+            alert('Resubmitting claim with PA information...');
+            currentStep++;
+            updateStep();
+        }
+
+        function processAsCash() {
+            alert('Processing as cash payment. Patient will pay full retail price.');
+            currentStep++;
+            updateStep();
+        }
+
+        function translateSigLive() {
+            const input = document.getElementById('enteredSig').value;
+            const codes = {
+                'qd': 'once daily', 'bid': 'twice daily', 'tid': 'three times daily', 'qid': 'four times daily',
+                'qod': 'every other day', 'qhs': 'at bedtime', 'qam': 'every morning',
+                'q4h': 'every 4 hours', 'q6h': 'every 6 hours', 'q8h': 'every 8 hours', 'q12h': 'every 12 hours',
+                'q4-6h': 'every 4 to 6 hours', 'q2wk': 'every 2 weeks', 'qwk': 'every week',
+                'po': 'by mouth', 'subq': 'subcutaneously', 'im': 'intramuscularly', 'iv': 'intravenously',
+                'inh': 'inhale', 'top': 'topically', 'sl': 'sublingual', 'pr': 'rectally',
+                'tab': 'tablet', 'cap': 'capsule', 'supp': 'suppository', 'susp': 'suspension',
+                'sol': 'solution', 'puffs': 'puffs', 'gtt': 'drops',
+                'mg': 'milligrams', 'mcg': 'micrograms', 'g': 'grams', 'ml': 'milliliters',
+                'u': 'units', 'iu': 'international units',
+                'prn': 'as needed', 'w/': 'with', 'w/o': 'without', 'c': 'with', 's': 'without',
+                'ac': 'before meals', 'pc': 'after meals', 'ud': 'as directed',
+                'aa': 'apply to affected area', 'inj': 'inject', 'inject': 'inject'
+            };
+            let translated = input.toLowerCase();
+            for (let [code, meaning] of Object.entries(codes)) {
+                translated = translated.replace(new RegExp('\\b' + code + '\\b', 'gi'), meaning);
+            }
+            document.getElementById('liveTranslation').textContent = translated || 'Type to see translation...';
+        }
+
+        function showPatientProfile() {
+            const patient = patients.find(p => p.name === currentRx.patientName);
+            document.getElementById('profileContent').innerHTML = '<div><h3>' + patient.name + '</h3><hr style="margin: 10px 0;"><p><strong>Date of Birth:</strong> ' + patient.dob + '</p><p><strong>Phone:</strong> ' + patient.phone + '</p><p><strong>Address:</strong> ' + patient.address + '</p><p><strong>Insurance:</strong> ' + patient.insurance + '</p><p><strong>Member ID:</strong> ' + patient.insuranceId + '</p><p style="margin-top: 15px; padding: 10px; background: #ffebee; border-left: 4px solid #e74c3c;"><strong>⚠️ Allergies:</strong> ' + patient.allergies + '</p></div>';
+            document.getElementById('patientProfileWindow').classList.add('active');
+            document.getElementById('patientProfileWindow').style.left = '100px';
+            document.getElementById('patientProfileWindow').style.top = '100px';
+        }
+
+        function closePatientProfile() {
+            document.getElementById('patientProfileWindow').classList.remove('active');
+        }
+
+        function showPrescriptionWindow() {
+            document.getElementById('rxWindowContent').innerHTML = '<div style="padding: 20px;"><h3>Prescription</h3><p><strong>Patient:</strong> ' + currentRx.patientName + '</p><p><strong>Medication:</strong> ' + currentRx.medication + '</p><p><strong>Quantity:</strong> ' + currentRx.quantity + '</p><p><strong>Days Supply:</strong> ' + currentRx.daysSupply + ' days</p><p><strong>Directions:</strong></p><p style="background: #fffef0; padding: 10px; margin: 10px 0;">' + currentRx.directions + '</p><p><strong>Refills:</strong> ' + currentRx.refills + '</p><p><strong>Sig Code:</strong> ' + currentRx.sig + '</p></div>';
+            document.getElementById('prescriptionWindow').classList.add('active');
+            document.getElementById('prescriptionWindow').style.left = '500px';
+            document.getElementById('prescriptionWindow').style.top = '100px';
+        }
+
+        function closePrescriptionWindow() {
+            document.getElementById('prescriptionWindow').classList.remove('active');
+        }
+
+        function closeProcessModal() {
+            document.getElementById('processModal').classList.remove('active');
+            currentStep = 1;
+            enteredData = {};
+            document.getElementById('nextBtn').textContent = 'Continue';
+            document.getElementById('nextBtn').className = 'btn btn-primary';
+            document.getElementById('nextBtn').onclick = handleNext;
+            document.getElementById('nextBtn').style.display = 'inline-block';
+            renderQueue();
+        }
+
+        function saveNewPatient() {
+            const firstName = document.getElementById('newFirstName').value;
+            const lastName = document.getElementById('newLastName').value;
+            const dob = document.getElementById('newDOB').value;
+            const phone = document.getElementById('newPhone').value;
+            const address = document.getElementById('newAddress').value;
+            const insurance = document.getElementById('newInsurance').value;
+            const insuranceId = document.getElementById('newInsuranceId').value;
+            const allergies = document.getElementById('newAllergies').value;
+            
+            if (!firstName || !lastName || !dob || !phone || !address) {
+                alert('Please fill all required fields (marked with *)');
+                return;
+            }
+            
+            patients.push({
+                name: lastName + ', ' + firstName,
+                dob: dob,
+                phone: phone,
+                address: address,
+                insurance: insurance || 'Cash',
+                insuranceId: insuranceId || 'N/A',
+                allergies: allergies || 'None',
+                lastFills: {}
+            });
+            
+            alert('✓ Patient registered successfully!');
+            document.getElementById('newFirstName').value = '';
+            document.getElementById('newLastName').value = '';
+            document.getElementById('newDOB').value = '';
+            document.getElementById('newPhone').value = '';
+            document.getElementById('newAddress').value = '';
+            document.getElementById('newInsurance').value = '';
+            document.getElementById('newInsuranceId').value = '';
+            document.getElementById('newAllergies').value = '';
+            updateReports();
+            switchView('patients');
+        }
+
+        function renderPatients() {
+            const html = patients.map(p => '<div style="background: white; padding: 20px; margin: 10px 0; border-radius: 10px;"><h3>' + p.name + '</h3><p><strong>DOB:</strong> ' + p.dob + '</p><p><strong>Phone:</strong> ' + p.phone + '</p><p><strong>Address:</strong> ' + p.address + '</p><p><strong>Insurance:</strong> ' + p.insurance + ' (' + p.insuranceId + ')</p><p><strong>Allergies:</strong> <span style="color: #e74c3c;">' + p.allergies + '</span></p></div>').join('');
+            document.getElementById('patientsList').innerHTML = html;
+        }
+
+        function updateReports() {
+            document.getElementById('totalProcessed').textContent = stats.processed;
+            document.getElementById('controlledCount').textContent = stats.controlled;
+            document.getElementById('paCount').textContent = stats.pa;
+            document.getElementById('patientCount').textContent = patients.length;
+        }
+
+        function switchView(view) {
+            document.querySelectorAll('.view-content').forEach(v => v.classList.remove('active'));
+            document.querySelectorAll('.menu-item').forEach(m => m.classList.remove('active'));
+            document.getElementById(view + 'View').classList.add('active');
+            event.target.classList.add('active');
+            if (view === 'patients') renderPatients();
+            if (view === 'reports') updateReports();
+        }
+
+        function makeDraggable(windowId, headerId) {
+            const win = document.getElementById(windowId);
+            const header = document.getElementById(headerId);
+            let pos1=0, pos2=0, pos3=0, pos4=0;
+            header.onmousedown = (e) => {
+                e.preventDefault();
+                pos3 = e.clientX;
+                pos4 = e.clientY;
+                document.onmouseup = () => { document.onmouseup = null; document.onmousemove = null; };
+                document.onmousemove = (e) => {
+                    e.preventDefault();
+                    pos1 = pos3 - e.clientX;
+                    pos2 = pos4 - e.clientY;
+                    pos3 = e.clientX;
+                    pos4 = e.clientY;
+                    win.style.top = (win.offsetTop - pos2) + "px";
+                    win.style.left = (win.offsetLeft - pos1) + "px";
+                };
+            };
+        }
+
+        makeDraggable('patientProfileWindow', 'profileHeader');
+        makeDraggable('prescriptionWindow', 'prescriptionHeader');
+        
+        generateNewRx();
+        generateNewRx();
+        
+        setInterval(() => {
+            if (rxQueue.length < 5 && Math.random() > 0.5) {
+                generateNewRx();
+            }
+        }, 30000);
+    </script>
+</body>
+</html>
